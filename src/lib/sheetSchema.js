@@ -213,8 +213,8 @@ export async function writeDashboardFormulas(spreadsheetId, year) {
         },
         {
             updateSheetProperties: {
-                properties: { sheetId: dash.sheetId, gridProperties: { frozenRowIndex: 1 } },
-                fields: 'gridProperties.frozenRowIndex'
+                properties: { sheetId: dash.sheetId, gridProperties: { frozenRowCount: 1 } },
+                fields: 'gridProperties.frozenRowCount'
             }
         }
     ];
