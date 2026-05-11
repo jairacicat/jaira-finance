@@ -1,0 +1,38 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from 'react';
+import { useStore } from '../store';
+import { fmtMoney, uid } from '../lib/format';
+import { Pencil, Trash, Plus, Check, X } from '../components/icons';
+export default function AccountsPage() {
+    const { accounts, accountTypes, settings, saveAccount, deleteAccount, saveAccountType, deleteAccountType } = useStore();
+    const [editingType, setEditingType] = useState(null);
+    const [editingAcct, setEditingAcct] = useState(null);
+    return (_jsxs("div", { className: "space-y-6", children: [_jsx("h1", { className: "text-xl font-semibold", children: "Accounts" }), _jsxs("section", { children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("div", { className: "section-title", children: "Account Types" }), _jsxs("button", { className: "btn-ghost text-sm", onClick: () => setEditingType({ id: '', name: '', kind: 'asset' }), children: [_jsx(Plus, { className: "w-4 h-4" }), " Add"] })] }), _jsxs("div", { className: "card divide-y divide-slate-800 -mx-1", children: [accountTypes.length === 0 && _jsx("div", { className: "px-2 py-3 text-slate-400 text-sm", children: "No types yet." }), accountTypes.map((t) => (_jsxs("div", { className: "flex items-center justify-between px-2 py-2.5", children: [_jsxs("div", { children: [_jsx("div", { className: "font-medium", children: t.name }), _jsx("div", { className: "text-xs text-slate-400", children: t.kind })] }), _jsxs("div", { className: "flex gap-1", children: [_jsx("button", { className: "btn-ghost p-2", onClick: () => setEditingType(t), children: _jsx(Pencil, { className: "w-4 h-4" }) }), _jsx("button", { className: "btn-ghost p-2 text-rose-400", onClick: () => confirmDel(`Delete type "${t.name}"?`, () => deleteAccountType(t.id)), children: _jsx(Trash, { className: "w-4 h-4" }) })] })] }, t.id)))] })] }), _jsxs("section", { children: [_jsxs("div", { className: "flex items-center justify-between mb-2", children: [_jsx("div", { className: "section-title", children: "Accounts" }), _jsxs("button", { className: "btn-ghost text-sm", disabled: accountTypes.length === 0, onClick: () => setEditingAcct({ id: '', name: '', typeId: accountTypes[0]?.id ?? '', openingBalance: 0, archived: false }), children: [_jsx(Plus, { className: "w-4 h-4" }), " Add"] })] }), _jsxs("div", { className: "card divide-y divide-slate-800 -mx-1", children: [accounts.length === 0 && _jsx("div", { className: "px-2 py-3 text-slate-400 text-sm", children: "No accounts yet." }), accounts.map((a) => {
+                                const type = accountTypes.find((t) => t.id === a.typeId);
+                                return (_jsxs("div", { className: "flex items-center justify-between px-2 py-2.5", children: [_jsxs("div", { children: [_jsxs("div", { className: "font-medium", children: [a.name, " ", a.archived && _jsx("span", { className: "chip ml-1", children: "archived" })] }), _jsxs("div", { className: "text-xs text-slate-400", children: [type?.name ?? '?', " \u00B7 opening ", fmtMoney(a.openingBalance, settings)] })] }), _jsxs("div", { className: "flex gap-1", children: [_jsx("button", { className: "btn-ghost p-2", onClick: () => setEditingAcct(a), children: _jsx(Pencil, { className: "w-4 h-4" }) }), _jsx("button", { className: "btn-ghost p-2 text-rose-400", onClick: () => confirmDel(`Delete account "${a.name}"? Existing transactions stay but lose their account label.`, () => deleteAccount(a.id)), children: _jsx(Trash, { className: "w-4 h-4" }) })] })] }, a.id));
+                            })] })] }), editingType && (_jsx(Modal, { title: editingType.id ? 'Edit Type' : 'New Type', onClose: () => setEditingType(null), children: _jsx(TypeForm, { value: editingType, onCancel: () => setEditingType(null), onSave: async (v) => {
+                        await saveAccountType(v.id ? v : { ...v, id: uid('at_') });
+                        setEditingType(null);
+                    } }) })), editingAcct && (_jsx(Modal, { title: editingAcct.id ? 'Edit Account' : 'New Account', onClose: () => setEditingAcct(null), children: _jsx(AcctForm, { value: editingAcct, types: accountTypes, onCancel: () => setEditingAcct(null), onSave: async (v) => {
+                        await saveAccount(v.id ? v : { ...v, id: uid('a_') });
+                        setEditingAcct(null);
+                    } }) }))] }));
+}
+function TypeForm({ value, onSave, onCancel }) {
+    const [v, setV] = useState(value);
+    return (_jsxs("div", { className: "space-y-3", children: [_jsxs("div", { children: [_jsx("label", { className: "label", children: "Name" }), _jsx("input", { className: "input", value: v.name, onChange: (e) => setV({ ...v, name: e.target.value }), autoFocus: true })] }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Kind" }), _jsxs("select", { className: "input", value: v.kind, onChange: (e) => setV({ ...v, kind: e.target.value }), children: [_jsx("option", { value: "asset", children: "Asset (cash, bank, e-wallet, investment)" }), _jsx("option", { value: "liability", children: "Liability (credit card, loan)" })] })] }), _jsx(FormButtons, { onCancel: onCancel, onSave: () => v.name && onSave(v), disabled: !v.name })] }));
+}
+function AcctForm({ value, types, onSave, onCancel }) {
+    const [v, setV] = useState(value);
+    return (_jsxs("div", { className: "space-y-3", children: [_jsxs("div", { children: [_jsx("label", { className: "label", children: "Name" }), _jsx("input", { className: "input", value: v.name, onChange: (e) => setV({ ...v, name: e.target.value }), autoFocus: true })] }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Type" }), _jsx("select", { className: "input", value: v.typeId, onChange: (e) => setV({ ...v, typeId: e.target.value }), children: types.map((t) => _jsx("option", { value: t.id, children: t.name }, t.id)) })] }), _jsxs("div", { children: [_jsx("label", { className: "label", children: "Opening balance" }), _jsx("input", { type: "number", step: "0.01", className: "input", value: v.openingBalance, onChange: (e) => setV({ ...v, openingBalance: Number(e.target.value) }) })] }), _jsxs("label", { className: "flex items-center gap-2 text-sm text-slate-300", children: [_jsx("input", { type: "checkbox", checked: v.archived, onChange: (e) => setV({ ...v, archived: e.target.checked }) }), "Archived"] }), _jsx(FormButtons, { onCancel: onCancel, onSave: () => v.name && v.typeId && onSave(v), disabled: !v.name || !v.typeId })] }));
+}
+export function Modal({ title, onClose, children }) {
+    return (_jsx("div", { className: "fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-4", onClick: onClose, children: _jsxs("div", { className: "bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5", onClick: (e) => e.stopPropagation(), children: [_jsxs("div", { className: "flex items-center justify-between mb-3", children: [_jsx("h2", { className: "font-semibold", children: title }), _jsx("button", { className: "btn-ghost p-2", onClick: onClose, children: _jsx(X, { className: "w-4 h-4" }) })] }), children] }) }));
+}
+export function FormButtons({ onCancel, onSave, disabled }) {
+    return (_jsxs("div", { className: "flex gap-2 pt-2", children: [_jsx("button", { className: "btn-secondary flex-1", onClick: onCancel, children: "Cancel" }), _jsxs("button", { className: "btn-primary flex-1", disabled: disabled, onClick: onSave, children: [_jsx(Check, { className: "w-4 h-4" }), " Save"] })] }));
+}
+function confirmDel(msg, fn) {
+    if (window.confirm(msg))
+        Promise.resolve(fn()).catch((e) => alert(e.message));
+}
